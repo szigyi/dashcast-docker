@@ -52,13 +52,18 @@ class DashboardLauncher():
     def new_cast_status(self, cast_status):
         """ Called when a new cast status has been received. """
         print('new_cast_status', self.device.name, cast_status)
+        print('current_device_state', self.device)
 
         def should_launch():
             """ If the device is active, the dashboard is not already active, and no other app is active. """
-            print('should launch', self.is_device_active(), not self.is_dashboard_active(), not self.is_other_app_active())
-            return (self.is_device_active()
-                    and not self.is_dashboard_active()
-                    and not self.is_other_app_active())
+            device_active = self.is_device_active()
+            dashboard_active = self.is_dashboard_active()
+            other_active = self.is_other_app_active()
+            print('app_display_name', self.device.app_display_name)
+            print('device_active', device_active, 'dashboard_active', dashboard_active, 'other_active', other_active)
+            return (device_active
+                    and not dashboard_active
+                    and not other_active)
 
         if should_launch():
             print('might launch dashboard in 10 seconds')
