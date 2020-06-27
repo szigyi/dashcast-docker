@@ -31,8 +31,7 @@ if '--show-debug' in sys.argv:
 class DashboardLauncher():
 
     def __init__(self, device, dashboard_url='https://home-assistant.io', dashboard_app_name='DashCast'):
-        self.device = device
-        print('DashboardLauncher', self.device.name)
+        print('Attempting to launch dashboard on Chromecast', device.name, dashboard_url)
 
         self.controller = dashcast.DashCastController()
         self.device.register_handler(self.controller)
@@ -69,19 +68,25 @@ class DashboardLauncher():
 
     def is_device_active(self):
         """ Returns if there is currently an app running and (maybe) visible. """
-        return (self.device.status is not None
-                and self.device.app_id is not None
-                and (self.device.status.is_active_input or self.device.ignore_cec)
-                and (not self.device.status.is_stand_by and not self.device.ignore_cec))
+        if self.device.status is None:
+            return False
+        app_id = self.device.app_id
+        active_input = self.device.status.is_active_input
+        stand_by = self.device.status.is_stand_by
+        print('app_id', app_id, 'active_input', active_input, 'stand_by', stand_by)
+        return (app_id is not None
+                and (active_input or self.device.ignore_cec)
+                and (not stand_by and not self.device.ignore_cec))
 
     def is_dashboard_active(self):
         """ Returns if the dashboard is (probably) visible. """
-        return (self.is_device_active()
+        print('dashboard_app_name', self.dashboard_app_name)
+        return (self.device.status is not None
                 and self.device.app_display_name == self.dashboard_app_name)
 
     def is_other_app_active(self):
         """ Returns if an app other than the dashboard or the Backdrop is (probably) visible. """
-        return (self.is_device_active()
+        return (self.device.status is not None
                 and self.device.app_display_name not in ('Backdrop', self.dashboard_app_name))
 
     def launch_dashboard(self):
