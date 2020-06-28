@@ -94,7 +94,7 @@ class DashboardLauncher():
         print('launch_dashboard', self.device.name, self.dashboard_url)
 
         def callback(response):
-            logger.debug('callback called', response)
+            self.logger.debug('callback called', response)
             self.dashboard_launched = time.time()
             # Unmute only if the dashboard muted it earlier
             if not self.was_muted:
@@ -103,7 +103,7 @@ class DashboardLauncher():
         try:
             # Mute first so Chromecast doesn't make a noise when it launches.
             self.was_muted = False
-            if not self.media_controller.volume_muted:
+            if not self.media_controller.status.volume_muted:
                 self.was_muted = True
                 self.receiver_controller.set_volume_muted(True)
                 time.sleep(1)
