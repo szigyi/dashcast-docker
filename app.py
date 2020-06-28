@@ -27,33 +27,36 @@ if IGNORE_CEC:
 if '--show-debug' in sys.argv:
     logging.basicConfig(level=logging.DEBUG)
 
-
 class DashboardLauncher():
 
     def __init__(self, device, dashboard_url='https://home-assistant.io', dashboard_app_name='DashCast'):
         print('Attempting to launch dashboard on Chromecast', device.name, dashboard_url)
 
+        self.device = device
         self.controller = dashcast.DashCastController()
         self.device.register_handler(self.controller)
 
-        receiver_controller = device.socket_client.receiver_controller
-        receiver_controller.register_status_listener(self)
+        self.receiver_controller = device.socket_client.receiver_controller
+        self.receiver_controller.register_status_listener(self)
 
         self.dashboard_url = dashboard_url
         self.dashboard_app_name = dashboard_app_name
 
+        self.should_launch = False
         # Check status on init.
-        self.new_cast_status(self.device.status)
-        # Launch dashboard on init.
+        self.receiver_controller.update_status()
+        # Keep logic in main loop.
         while True:
-            self.launch_dashboard()
-            time.sleep(60)
+            if self.should_launch:
+                self.launch_dashboard()
+            self.controller._socket_client.heartbeat_controller.is_expired()
+            time.sleep(5)
 
     def new_cast_status(self, cast_status):
         """ Called when a new cast status has been received. """
         print('new_cast_status', self.device.name, cast_status)
         print('current_device_state', self.device)
-        
+
         def should_launch():
             """ If the device is active, the dashboard is not already active, and no other app is active. """
             device_idle = self.is_device_idle()
@@ -64,12 +67,8 @@ class DashboardLauncher():
             return (device_idle
                     and not dashboard_active
                     and not other_active)
-        
-        if should_launch():
-            print('might launch dashboard in 10 seconds')
-            time.sleep(10)
-        if should_launch():
-            self.launch_dashboard()
+
+        self.should_launch = should_launch()
 
     def is_device_idle(self):
         """ Returns if the the Chromecast is (probably) idle. """
@@ -90,7 +89,7 @@ class DashboardLauncher():
                 and self.device.app_display_name not in ('Backdrop', self.dashboard_app_name))
 
     def launch_dashboard(self):
-        print('Launching dashboard on Chromecast', self.device.name)
+        print('launch_dashboard', self.device.name, self.dashboard_url)
 
         def callback(response):
             print('callback called', response)
@@ -101,25 +100,7 @@ class DashboardLauncher():
             print(e)
             pass
 
-
-"""
-Check for cast.socket_client.get_socket() and
-handle it with cast.socket_client.run_once()
-"""
-"""
-def main_loop():
-    def callback(chromecast):
-        print('found', chromecast)
-        DashboardLauncher(chromecast, dashboard_url='http://192.168.1.132:8080')
-
-    pychromecast.get_chromecasts(blocking=False, callback=callback)
-
-    while True:
-        time.sleep(1)
-
-main_loop()
-"""
-
+# Initial lookup for Chromecast.
 casts = pychromecast.get_chromecasts()
 if len(casts) == 0:
     print('No Devices Found')
@@ -132,8 +113,3 @@ if not cast:
     exit()
 
 DashboardLauncher(cast, dashboard_url=DASHBOARD_URL)
-
-# Keep running
-while True:
-    time.sleep(1)
-
