@@ -51,8 +51,16 @@ class DashboardLauncher():
         while True:
             if self.should_launch:
                 self.launch_dashboard()
-            self.controller._socket_client.heartbeat_controller.is_expired()
-            time.sleep(5)
+            elif (self.device.model_name == 'Google Nest Hub'
+                and self.is_dashboard_active()
+                and hasattr(self, 'dashboard_launched')
+                and (time.time() - self.dashboard_launched) > 600
+            ):
+                print('10 minute timeout, launching again')
+                self.device.quit_app()
+                self.launch_dashboard()
+            self.receiver_controller.update_status()
+            time.sleep(10)
 
     def new_cast_status(self, cast_status):
         """ Called when a new cast status has been received. """
