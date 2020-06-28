@@ -53,39 +53,34 @@ class DashboardLauncher():
         """ Called when a new cast status has been received. """
         print('new_cast_status', self.device.name, cast_status)
         print('current_device_state', self.device)
-
+        
         def should_launch():
             """ If the device is active, the dashboard is not already active, and no other app is active. """
-            device_active = self.is_device_active()
+            device_idle = self.is_device_idle()
             dashboard_active = self.is_dashboard_active()
             other_active = self.is_other_app_active()
             print('app_display_name', self.device.app_display_name)
-            print('device_active', device_active, 'dashboard_active', dashboard_active, 'other_active', other_active)
-            return (device_active
+            print('device_idle', device_idle, 'dashboard_active', dashboard_active, 'other_active', other_active)
+            return (device_idle
                     and not dashboard_active
                     and not other_active)
-
+        
         if should_launch():
             print('might launch dashboard in 10 seconds')
             time.sleep(10)
         if should_launch():
             self.launch_dashboard()
 
-    def is_device_active(self):
-        """ Returns if there is currently an app running and (maybe) visible. """
-        if self.device.status is None:
-            return False
-        app_id = self.device.app_id
-        active_input = self.device.status.is_active_input
-        stand_by = self.device.status.is_stand_by
-        print('app_id', app_id, 'active_input', active_input, 'stand_by', stand_by)
-        return (app_id is not None
-                and (active_input or self.device.ignore_cec)
-                and (not stand_by and not self.device.ignore_cec))
+    def is_device_idle(self):
+        """ Returns if the the Chromecast is (probably) idle. """
+        return (self.device.status is not None
+                and self.device.app_display_name == 'Backdrop'
+                and self.device.status.status_text == ''
+                and self.device.status.is_stand_by
+                and not self.device.status.is_active_input)
 
     def is_dashboard_active(self):
         """ Returns if the dashboard is (probably) visible. """
-        print('dashboard_app_name', self.dashboard_app_name)
         return (self.device.status is not None
                 and self.device.app_display_name == self.dashboard_app_name)
 
