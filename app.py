@@ -36,15 +36,16 @@ class DashboardLauncher():
         self.controller = dashcast.DashCastController()
         self.device.register_handler(self.controller)
 
-        receiver_controller = device.socket_client.receiver_controller
-        receiver_controller.register_status_listener(self)
+        self.receiver_controller = device.socket_client.receiver_controller
+        self.receiver_controller.register_status_listener(self)
+        self.media_controller = device.socket_client.media_controller
 
         self.dashboard_url = dashboard_url
         self.dashboard_app_name = dashboard_app_name
 
         self.should_launch = False
         # Check status on init.
-        receiver_controller.update_status()
+        self.receiver_controller.update_status()
         # Keep logic in main loop.
         while True:
             if self.should_launch:
@@ -93,8 +94,17 @@ class DashboardLauncher():
 
         def callback(response):
             print('callback called', response)
+            self.dashboard_launched = time.time()
+            # Unmute only if the dashboard muted it earlier
+            if not self.was_muted:
+                self.receiver_controller.set_volume_muted(False)
 
         try:
+            # Mute first so Chromecast doesn't make a noise when it launches.
+            self.was_muted = False
+            if not self.media_controller.volume_muted:
+            self.was_muted = True
+                self.receiver_controller.set_volume_muted(True)
             self.controller.load_url(self.dashboard_url, callback_function=callback)
         except Exception as e:
             print(e)
