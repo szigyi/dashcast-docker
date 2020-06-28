@@ -110,9 +110,9 @@ class DashboardLauncher():
 
         try:
             # Mute first so Chromecast doesn't make a noise when it launches.
-            self.was_muted = False
+            self.was_muted = True
             if not self.media_controller.status.volume_muted:
-                self.was_muted = True
+                self.was_muted = False
                 self.receiver_controller.set_volume_muted(True)
                 time.sleep(1)
             self.controller.load_url(self.dashboard_url, callback_function=callback)
