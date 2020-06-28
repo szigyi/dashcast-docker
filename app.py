@@ -42,6 +42,7 @@ class DashboardLauncher():
 
         self.dashboard_url = dashboard_url
         self.dashboard_app_name = dashboard_app_name
+        self.logger = logging.getLogger(__name__)
 
         self.should_launch = False
         # Check status on init.
@@ -55,16 +56,16 @@ class DashboardLauncher():
 
     def new_cast_status(self, cast_status):
         """ Called when a new cast status has been received. """
-        print('new_cast_status', self.device.name, cast_status)
-        print('current_device_state', self.device)
+        self.logger.info('new_cast_status', self.device.name, cast_status)
+        self.logger.debug('current_device_state', self.device)
 
         def should_launch():
             """ If the device is active, the dashboard is not already active, and no other app is active. """
             device_idle = self.is_device_idle()
             dashboard_active = self.is_dashboard_active()
             other_active = self.is_other_app_active()
-            print('app_display_name', self.device.app_display_name)
-            print('device_idle', device_idle, 'dashboard_active', dashboard_active, 'other_active', other_active)
+            self.logger.debug('app_display_name', self.device.app_display_name)
+            self.logger.info('device_idle', device_idle, 'dashboard_active', dashboard_active, 'other_active', other_active)
             return (device_idle
                     and not dashboard_active
                     and not other_active)
@@ -93,7 +94,7 @@ class DashboardLauncher():
         print('launch_dashboard', self.device.name, self.dashboard_url)
 
         def callback(response):
-            print('callback called', response)
+            logger.debug('callback called', response)
             self.dashboard_launched = time.time()
             # Unmute only if the dashboard muted it earlier
             if not self.was_muted:
