@@ -36,15 +36,15 @@ class DashboardLauncher():
         self.controller = dashcast.DashCastController()
         self.device.register_handler(self.controller)
 
-        self.receiver_controller = device.socket_client.receiver_controller
-        self.receiver_controller.register_status_listener(self)
+        receiver_controller = device.socket_client.receiver_controller
+        receiver_controller.register_status_listener(self)
 
         self.dashboard_url = dashboard_url
         self.dashboard_app_name = dashboard_app_name
 
         self.should_launch = False
         # Check status on init.
-        self.receiver_controller.update_status()
+        receiver_controller.update_status()
         # Keep logic in main loop.
         while True:
             if self.should_launch:
