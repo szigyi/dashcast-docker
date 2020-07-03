@@ -64,16 +64,15 @@ class DashboardLauncher():
 
     def new_cast_status(self, cast_status):
         """ Called when a new cast status has been received. """
-        self.logger.info('new_cast_status', self.device.name, cast_status)
-        self.logger.debug('current_device_state', self.device)
+        self.logger.debug('current_device_state: %s', self.device)
 
         def should_launch():
             """ If the device is active, the dashboard is not already active, and no other app is active. """
             device_idle = self.is_device_idle()
             dashboard_active = self.is_dashboard_active()
             other_active = self.is_other_app_active()
-            self.logger.debug('app_display_name', self.device.app_display_name)
-            self.logger.info('device_idle', device_idle, 'dashboard_active', dashboard_active, 'other_active', other_active)
+            self.logger.debug('app_display_name: %s', self.device.app_display_name)
+            self.logger.info('device_idle %r %s %r %s %r', device_idle, 'dashboard_active', dashboard_active, 'other_active', other_active)
             return (device_idle
                     and not dashboard_active
                     and not other_active)
@@ -102,7 +101,7 @@ class DashboardLauncher():
         print('launch_dashboard', self.device.name, self.dashboard_url)
 
         def callback(response):
-            self.logger.debug('callback called', response)
+            self.logger.debug('callback called: %s', response)
             self.dashboard_launched = time.time()
             time.sleep(5)
             self.receiver_controller.set_volume_muted(False)
