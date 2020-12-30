@@ -13,7 +13,6 @@ import pychromecast
 import pychromecast.controllers.dashcast as dashcast
 
 print('DashCast')
-print('Searching for Chromecasts...')
 
 DASHBOARD_URL = os.getenv('DASHBOARD_URL', 'https://home-assistant.io')
 DISPLAY_NAME = os.getenv('DISPLAY_NAME')
@@ -23,15 +22,14 @@ if IGNORE_CEC:
     print('Ignoring CEC for Chromecast', DISPLAY_NAME)
     pychromecast.IGNORE_CEC.append(DISPLAY_NAME)
 
-
 if '--show-debug' in sys.argv:
     logging.basicConfig(level=logging.DEBUG)
 
-class DashboardLauncher():
+
+class DashboardLauncher:
 
     def __init__(self, device, dashboard_url='https://home-assistant.io', dashboard_app_name='DashCast'):
         print('Attempting to launch dashboard on Chromecast', device.name, dashboard_url)
-
         self.device = device
         self.controller = dashcast.DashCastController()
         self.device.register_handler(self.controller)
@@ -45,6 +43,8 @@ class DashboardLauncher():
         self.logger = logging.getLogger(__name__)
 
         self.should_launch = False
+        # connect to device and wait for success
+        self.device.wait()
         # Check status on init.
         self.receiver_controller.update_status()
         # Keep logic in main loop.
@@ -52,10 +52,10 @@ class DashboardLauncher():
             if self.should_launch:
                 self.launch_dashboard()
             elif (self.device.model_name == 'Google Nest Hub'
-                and self.is_dashboard_active()
-                and hasattr(self, 'dashboard_launched')
-                and (time.time() - self.dashboard_launched) > 600
-            ):
+                  and self.is_dashboard_active()
+                  and hasattr(self, 'dashboard_launched')
+                  and (time.time() - self.dashboard_launched) > 600
+                  ):
                 print('10 minute timeout, launching again')
                 self.device.quit_app()
                 self.launch_dashboard()
@@ -72,7 +72,8 @@ class DashboardLauncher():
             dashboard_active = self.is_dashboard_active()
             other_active = self.is_other_app_active()
             self.logger.debug('app_display_name: %s', self.device.app_display_name)
-            self.logger.info('device_idle %r %s %r %s %r', device_idle, 'dashboard_active', dashboard_active, 'other_active', other_active)
+            self.logger.info('device_idle %r %s %r %s %r', device_idle, 'dashboard_active', dashboard_active,
+                             'other_active', other_active)
             return (device_idle
                     and not dashboard_active
                     and not other_active)
@@ -115,16 +116,22 @@ class DashboardLauncher():
             print(e)
             pass
 
+
 # Initial lookup for Chromecast.
-casts = pychromecast.get_chromecasts()
+print('Searching for Chromecasts...')
+casts = pychromecast.get_chromecasts()[0]
 if len(casts) == 0:
     print('No Devices Found')
     exit()
 
+print('Found devices:')
+print(casts, sep='\n')
 cast = next(cc for cc in casts if DISPLAY_NAME in (None, '') or cc.device.friendly_name == DISPLAY_NAME)
 
 if not cast:
     print('Chromecast with name', DISPLAY_NAME, 'not found')
     exit()
+else:
+    print(DISPLAY_NAME, 'device has been found')
 
 DashboardLauncher(cast, dashboard_url=DASHBOARD_URL)
